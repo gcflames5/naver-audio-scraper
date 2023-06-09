@@ -29,13 +29,13 @@ class NaverDict():
 
         if not os.path.exists(output_folder):
             os.makedirs(output_folder)
-
+            
         with open(os.path.join(output_folder, f'{word}.mp3'), 'wb') as f:
             f.write(audio_page.content)
 
     def bulk_fetch(self, words, output_folder):
         for word in words:
-            logging.info(f"Starting to fetch audio for {word}")
+            logging.info(f"Fetching audio for {word}...")
             try:
                 self.fetch_audio_file(word, output_folder)
             except Exception:

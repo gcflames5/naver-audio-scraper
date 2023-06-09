@@ -1,10 +1,9 @@
 import argparse 
-import requests
-import re
-import pdb
 import logging
+import sys
 
 import naver_dict as nd
+import csv_parser as cvsp
 
 class ArgParser(argparse.ArgumentParser):
     '''
@@ -23,8 +22,7 @@ class ArgParser(argparse.ArgumentParser):
         self.add_argument("--csv-file",
                           type=str,
                           help="CSV file to source korean words from, if specified will ignore cmdline words")
-
-        self.add_argument("--csv-delimter",
+        self.add_argument("--csv-delimeter",
                           type=str, default=",",
                           help="CSV delimeter separating words")
         self.add_argument("--output-folder",
@@ -44,6 +42,14 @@ def main():
 
     if len(args.korean_words) > 0:
         word_list = args.korean_words
+    elif args.csv_file != None:
+        csv_parser = cvsp.CSVParser()
+        word_list = csv_parser.parse_word_list(args.csv_file, args.csv_delimeter)
+    else:
+        logging.error("Must either specify words on the command line or a CSV file!")
+        sys.exit(1)
+
+    logging.info(f'Fetching audio for {len(word_list)} words. Truncated list: {", ".join(word_list[:10])}')
 
     naver_dict = nd.NaverDict()
     naver_dict.bulk_fetch(word_list, args.output_folder)
