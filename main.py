@@ -1,17 +1,52 @@
+import argparse 
 import requests
 import re
 import pdb
+import logging
 
-word_escaped = requests.utils.quote('환불')
-dict_url = f"https://dict.naver.com/search.dict?dicQuery={word_escaped}&query={word_escaped}&target=dic&ie=utf8&query_utf=&isOnlyViewEE="
-print(dict_url)
+import naver_dict as nd
 
-dict_page = requests.get(dict_url)
-playlist_match_compiled = re.compile(r'playlist=\"([^ ]*)\"')
-matches = playlist_match_compiled.findall(dict_page.text)
-audio_url = matches[0]
-print(audio_url)
-audio_page = requests.get(audio_url)
+class ArgParser(argparse.ArgumentParser):
+    '''
+    Wrapper module to parse command line
+    '''
 
-with open('test.mp3', 'wb') as f:
-    f.write(audio_page.content)
+    def __init__(self):
+        super().__init__(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+
+        # List of words on the command line
+        self.add_argument("korean_words",
+                          nargs="*",
+                          help="Space separated list of korean words to fetch audio samples for")
+
+        # Optional CSV Arguments
+        self.add_argument("--csv-file",
+                          type=str,
+                          help="CSV file to source korean words from, if specified will ignore cmdline words")
+
+        self.add_argument("--csv-delimter",
+                          type=str, default=",",
+                          help="CSV delimeter separating words")
+        self.add_argument("--output-folder",
+                          type=str, default=".",
+                          help="Output path to write .mp3 files to")
+
+def config_logger():
+    logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
+
+def main():
+    config_logger()
+
+    arg_parser = ArgParser()
+    args = arg_parser.parse_args()
+
+    word_list = []
+
+    if len(args.korean_words) > 0:
+        word_list = args.korean_words
+
+    naver_dict = nd.NaverDict()
+    naver_dict.bulk_fetch(word_list, args.output_folder)
+
+if __name__ == "__main__":
+    main()
